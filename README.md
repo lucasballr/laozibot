@@ -6,6 +6,7 @@ So this is a MAJOR work in progress project. It's basically a discord bot that u
 
 If you wanna run this yourself, You'll need an api key from OpenAI and OpenWeatherMap. Also, you'll need to make a discord bot account on discord, and copy the bot token into the config file. The config file looks like this:
 ```
+### filename: config.py
 OPENAI_API_KEY='<OpenAI API Key>'
 DISCORD_API_KEY='<Discord bot token>'
 OWM_API_KEY='<OWM KEY>'
