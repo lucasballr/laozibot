@@ -7,7 +7,7 @@ import config
 owm_api_key = config.OWM_API_KEY
 
 def get_weather(loc):
-    owm = OWM('60f9e428d04cf17ee0ca736a6073086f')
+    owm = OWM(owm_api_key)
     mgr = owm.weather_manager()
 
     # Search for current weather in London (Great Britain) and get details
