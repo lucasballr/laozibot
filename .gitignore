@@ -1,4 +1,5 @@
 __*
 config.py
 *.db
-*.txt
+history.txt
+approved_users.txt
