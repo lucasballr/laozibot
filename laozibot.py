@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 import json
 from w6 import get_user, get_weather, get_location, update_location, add_user
 from gpt import ask_gpt
+import typing
+import functools
 
 openai.api_key = config.OPENAI_API_KEY
 discord_api_key = config.DISCORD_API_KEY
@@ -20,11 +22,12 @@ db_conn = sqlite3.connect('laozidb.db')
 db_conn.execute('CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, remind_at INTEGER, content TEXT)')
 db_conn.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, location TEXT)''')
 command_list = ['!r', '!w']
-init_message = [{'role':'system', 'content':'You are a helpful AI assistant named laozibot.'}]
+init_message = [{'role':'system', 'content':'You are a helpful AI assistant named laozibot. You must respond to every message in under 2000 characters, so make sure each message contains all of the necessary information.'}]
 reminders = {}
 messages = init_message
 users = {}
-# Define your bot's intents
+
+# Define  bot's intents
 intents = discord.Intents.all()
 intents.members = True  # Subscribe to the privileged members intent
 
@@ -37,20 +40,30 @@ def extract_code(text):
     return segments
     
 def split_string(input_string):
-    # check if the input string is larger than 2000 characters
+    max_size = 2000
+    # check if there is a code block in the output
     if '```' in input_string:
         input_string = extract_code(input_string)
     else:
         input_string = [input_string]
+
+    # Loop through the resulting strings and split the string if it is too long.
     new_strings = []
     for s in input_string:
-        if len(s) > 2000:
-            # split the input string into chunks of 2000 characters or less
-            chunks = [input_string[i:i+1999] for i in range(0, len(s), 1999)]
-            new_strings.extend(chunks)
+        if len(s) >= max_size:
+            s = s.split('\n')
+            mes = ""
+            for line in s:
+                if len(mes) + len(line) >= max_size:
+                    new_strings.append(mes)
+                    mes = line + "\n"
+                else:
+                    mes += line + "\n"
+            new_strings.append(mes)
         else:
             new_strings.append(s)
-        # if the input string is less than or equal to 2000 characters, return it as is
+
+    # Return the list of strings
     return new_strings
 
 async def schedule_reminder(user, duration, content, reminder_id):
@@ -73,7 +86,7 @@ async def schedule_reminder(user, duration, content, reminder_id):
 
 def remind(message):
     # Parse the reminder duration and message content
-    duration, content = message.content[10:].split(' ', 1)
+    duration, content = message.content[3:].split(' ', 1)
     # Convert the duration (in minutes) to seconds
     if duration.endswith('s'):
         duration = int(duration[:-1])
@@ -113,11 +126,10 @@ def weather(message):
     
     loc = get_location(db_conn, user)
     w = get_weather(loc)
-    m = init_message.copy()
-    p = "Here is some information about the weather in my area: "
+    m = [{'role':'system', 'content':'You are a weather reporter. Every response should include the weather and temperature as well as a suggestion for how the user should go about their day in 50 words or less'}]
+    p = "Here is some information about the weather in {}: ".format(loc)
     for i in w:
         p += i + " "
-    p += "Based on this information, suggest how I should go about my day in 50 words or less"
     m.append({"role":"user", "content":p})
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=m)
     sys_res = response["choices"][0]["message"]
@@ -133,6 +145,12 @@ def run_command(message):
     else:
         return "Command Error. Idk how you got here."
 
+# This is essential for any blocking function being run during message response.
+async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typing.Any:
+    # Runs a blocking function in a non-blocking way
+    func = functools.partial(blocking_func, *args, **kwargs) # `run_in_executor` doesn't support kwargs, `functools.partial` does
+    return await client.loop.run_in_executor(None, func)
+
 @client.event
 async def on_ready():
     print("Logged in as {0.user}".format(client))
@@ -145,23 +163,27 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    print("{}: {}".format(message.author.name, message.content))
     if message.author == client.user:
         return
 
     # Check if message is in a DM or the message starts with !g
     if isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
+        print("{}: {}".format(message.author.name, message.content))
         async with message.channel.typing():
             pass
         
         if message.content.split(' ')[0] in command_list:
             await message.channel.send(run_command(message))
         else:
-            output = split_string(ask_gpt(message))
+            gpt_res = await run_blocking(ask_gpt, message)
+            output = split_string(gpt_res)
             for i in output:
                 if i != "":
                     await message.channel.send(i)
+                    
+    # This checks if a command has been run, but I can replace this with commands.Bot
     elif message.content.split(' ')[0] in command_list:
+        print("{}: {}".format(message.author.name, message.content))
         run_command(message)
 
 client.run(discord_api_key)

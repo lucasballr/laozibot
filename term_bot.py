@@ -33,7 +33,7 @@ def get_lines():
 
 def summarize(chat_hist):
     print("Summarizing last 10 chats")
-    prompt = [{'role':'system', 'content':'You are a summary bot. The user input is a chat transcript between a user and an assistant named" Laozibot. Respond to each message with a concise bulleted list of the facts about both the user and the assistant.'}]
+    prompt = [{'role':'system', 'content':'You are a summary bot. The user input is a chat transcript between a user and an assistant named Laozibot. Respond to each message with a concise bulleted list of the facts about both the user and the assistant.'}]
     chat = "\n".join(chat_hist) 
     prompt.append({'role':'user', 'content':chat})
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=prompt)
