@@ -21,7 +21,7 @@ discord_api_key = config.DISCORD_API_KEY
 db_conn = sqlite3.connect('laozidb.db')
 db_conn.execute('CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, remind_at INTEGER, content TEXT)')
 db_conn.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, location TEXT)''')
-command_list = ['!r', '!w']
+command_list = ['!r', '!w', '!clear']
 init_message = [{'role':'system', 'content':'You are a helpful AI assistant named laozibot. You must respond to every message in under 2000 characters, so make sure each message contains all of the necessary information.'}]
 reminders = {}
 messages = init_message
@@ -124,16 +124,14 @@ def weather(message):
     else:
         return "Invalid command"
     
-    loc = get_location(db_conn, user)
-    w = get_weather(loc)
-    m = [{'role':'system', 'content':'You are a weather reporter. Every response should include the weather and temperature as well as a suggestion for how the user should go about their day in 50 words or less'}]
-    p = "Here is some information about the weather in {}: ".format(loc)
-    for i in w:
-        p += i + " "
-    m.append({"role":"user", "content":p})
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=m)
-    sys_res = response["choices"][0]["message"]
-    return sys_res['content']
+    return "Location updated"
+
+def clear_chat(message):
+    user = message.author.id
+    c = db_conn.cursor()
+    c.execute("DELETE FROM history WHERE name = ? OR rec = ?", (user, user))
+    db_conn.commit()
+    return "Chat cleared"
 
 def run_command(message):
     cmd = message.content.split(' ')[0]
@@ -142,6 +140,8 @@ def run_command(message):
         return "Reminder Set"
     elif cmd == '!w':
         return weather(message)
+    elif cmd == '!clear':
+        return clear_chat(message)
     else:
         return "Command Error. Idk how you got here."
 
@@ -169,16 +169,22 @@ async def on_message(message):
     # Check if message is in a DM or the message starts with !g
     if isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
         print("{}: {}".format(message.author.name, message.content))
-        async with message.channel.typing():
-            pass
         
         if message.content.split(' ')[0] in command_list:
-            await message.channel.send(run_command(message))
+            text = run_command(message)
+            print("laozibot: {}".format(text))
+            embed = discord.Embed()
+            embed.add_field(name="Command Response", value=text, inline=False)
+            await message.channel.send(embed=embed)
         else:
-            gpt_res = await run_blocking(ask_gpt, message)
+            loc = get_location(db_conn, message.author.id)
+            info = "Current Location: {}, {}".format(loc, get_weather(loc))
+            async with message.channel.typing():
+                gpt_res = await run_blocking(ask_gpt, message, info)
             output = split_string(gpt_res)
             for i in output:
                 if i != "":
+                    print("laozibot: {}".format(i))
                     await message.channel.send(i)
                     
     # This checks if a command has been run, but I can replace this with commands.Bot

@@ -11,18 +11,25 @@ def get_weather(loc):
     mgr = owm.weather_manager()
 
     # Search for current weather in London (Great Britain) and get details
-    observation = mgr.weather_at_place(loc)
-    w = observation.weather
+    try:
+        current = mgr.weather_at_place(loc)
+        forecast = mgr.forecast_at_place(loc, "3h")
+    except:
+        return "There was an error obtaining weather information"
 
-    return (
-        "Weather: {}".format(w.detailed_status),         # 'clouds'
-        "Wind Speed: {}".format(w.wind()['speed']),                  # {'speed': 4.6, 'deg': 330}
-        "Humidity: {}".format(w.humidity),                # 87
-        "Temperature: {}".format(w.temperature('fahrenheit')),  # {'temp_max': 10.5, 'temp': 9.7, 'temp_min': 9.0}
-        "Rain: {}".format(w.rain),                    # {}
-        "Heat Index: {}".format(w.heat_index),              # None
-        "Clouds: {}".format(w.clouds)                  # 75
-        )
+    tomorrow = timestamps.tomorrow()
+    today = timestamps.next_three_hours()
+    f_tomorrow = forecast.get_weather_at(tomorrow)
+    f_today = forecast.get_weather_at(today)
+    
+
+    w = current.weather
+    
+
+    return """ Current weather: Weather: {}, Wind Speed: {}, Humidity: {}, Temperature: {}, Rain: {}, Heat Index: {}, Clouds: {}
+Today's forecast: Weather: {}, Wind Speed: {}, Humidity: {}, Temperature: {}, Rain: {}, Heat Index: {}, Clouds: {}
+Tomorrow's forecast: Weather: {}, Wind Speed: {}, Humidity: {}, Temperature: {}, Rain: {}, Heat Index: {}, Clouds: {}
+""".format(w.detailed_status, w.wind()['speed'], w.humidity, w.temperature('fahrenheit'), w.rain, w.heat_index, w.clouds, f_today.detailed_status, f_today.wind()['speed'], f_today.humidity, f_today.temperature('fahrenheit'), f_today.rain, f_today.heat_index, f_today.clouds, f_tomorrow.detailed_status, f_tomorrow.wind()['speed'], f_tomorrow.humidity, f_tomorrow.temperature('fahrenheit'), f_tomorrow.rain, f_tomorrow.heat_index, f_tomorrow.clouds)       
 
 # Add a new user to the database
 def add_user(conn, name, location):
@@ -32,7 +39,7 @@ def add_user(conn, name, location):
         conn.commit()
         print("User added successfully!")
     except sqlite3.IntegrityError:
-        print("User with that email already exists")
+        print("User with that name already exists")
 
 # Update a user's location
 def update_location(conn, name, new_location):
@@ -59,5 +66,4 @@ def get_user(conn, name):
         return True
     else:
         return False
-
 
