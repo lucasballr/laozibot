@@ -3,6 +3,8 @@
 import discord
 from discord.ext import commands
 import os
+import io
+import urllib.request
 import openai, config
 import asyncio
 import sqlite3
@@ -38,7 +40,7 @@ def extract_code(text):
     pattern = r'(```[\s\S]+?```)'  # Add capturing group with parentheses
     segments = re.split(pattern, text)
     return segments
-    
+
 def split_string(input_string):
     max_size = 2000
     # check if there is a code block in the output
@@ -109,7 +111,7 @@ def remind(message):
 def weather(message):
     cmd = message.content.split(' ')
     user = message.author.id
-    
+
     if len(cmd) == 1:
         if not get_user(db_conn, user):
             return "You're not registered, to register type '!w <location>'"
@@ -123,7 +125,7 @@ def weather(message):
             update_location(db_conn, user, location)
     else:
         return "Invalid command"
-    
+
     return "Location updated"
 
 def clear_chat(message):
@@ -167,9 +169,49 @@ async def on_message(message):
         return
 
     # Check if message is in a DM or the message starts with !g
-    if isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
+    if message.content.startswith('!relevantxkcd'):
+        prev_messages = []
+        async for m in message.channel.history(limit=2):
+            prev_messages.append(m)
+        previous_message = prev_messages[1].content
+
+        async with message.channel.typing():
+            response = openai.ChatCompletion.create(
+              model="gpt-3.5-turbo",
+              messages=[
+                    {"role": "system", "content": "You are RelevantXKCD bot. Your sole purpose is to provide links to xkcd comics relevant to the message given to you by the user, based on how well it matches with the information provided on the ExplainXKCD website. You must always respond with a link to an xkcd comic. When you don't know of a link to an xkcd comic relevant to the message, you must instead respond with the link 'https://xkcd.com/{number}' where {number} is a randomly chosen number between 1 and 2781. Your response is always just a single link, no explanation or justification, just one link per message that you send."},
+                    {"role": "user", "content": "Lol whenever I see the 'permission denied' message I always just throw sudo in front of it without thinking about it"},
+                    {"role": "assistant", "content": "https://xkcd.com/149"},
+                    {"role": "user", "content": "agaiheroaerjaeiogahoierhg;eigahi"},
+                    {"role": "assistant", "content": "https://xkcd.com/213"},
+                    {"role": "user", "content": previous_message}
+                ],
+                max_tokens=200,
+            )
+
+            result = response['choices'][0]['message']['content'].strip()
+            print(f'\n{message.author.name}: {previous_message}')
+            print(f'RelevantXKCD: {result}')
+            # Find link in result
+            try:
+                xkcd_link = re.search(r'https?:\/\/[^\s"\']+', result).group(0)
+            except:
+                await message.channel.send(result)
+                return
+            if result != xkcd_link:
+                await message.channel.send(result)
+
+            with urllib.request.urlopen(xkcd_link) as response:
+                contents = response.read()
+                img_url = re.search(r'Image URL \(for hotlinking\/embedding\):.*?href=.*?"(.*?)"', contents.decode()).group(1)
+                filename = img_url.split('/')[-1]
+                print(f'Downloading file: {img_url}')
+                with urllib.request.urlopen(img_url) as image:
+                    await message.channel.send(file=discord.File(io.BytesIO(image.read()), filename))
+
+    elif isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
         print("{}: {}".format(message.author.name, message.content))
-        
+
         if message.content.split(' ')[0] in command_list:
             text = run_command(message)
             print("laozibot: {}".format(text))
@@ -186,7 +228,7 @@ async def on_message(message):
                 if i != "":
                     print("laozibot: {}".format(i))
                     await message.channel.send(i)
-                    
+
     # This checks if a command has been run, but I can replace this with commands.Bot
     elif message.content.split(' ')[0] in command_list:
         print("{}: {}".format(message.author.name, message.content))
