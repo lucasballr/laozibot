@@ -25,3 +25,4 @@ python laozibot.py
 # Note
 
 This is super early phases. Don't expect literally anything to work yet.
+Anyone who submits a pull request that gets approved will get added to the "approved-users" list. Don't even try to exploit becuase by api keys have limits.
