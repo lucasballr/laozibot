@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 import os
 import io
-import urllib.request
+import requests
 import openai, config
 import asyncio
 import sqlite3
@@ -201,13 +201,14 @@ async def on_message(message):
             if result != xkcd_link:
                 await message.channel.send(result)
 
-            with urllib.request.urlopen(xkcd_link) as response:
-                contents = response.read()
-                img_url = re.search(r'Image URL \(for hotlinking\/embedding\):.*?href=.*?"(.*?)"', contents.decode()).group(1)
-                filename = img_url.split('/')[-1]
-                print(f'Downloading file: {img_url}')
-                with urllib.request.urlopen(img_url) as image:
-                    await message.channel.send(file=discord.File(io.BytesIO(image.read()), filename))
+            resp = requests.get(xkcd_link)
+            contents = resp.content
+            img_url = re.search(r'Image URL \(for hotlinking\/embedding\):.*?href=.*?"(.*?)"', contents.decode()).group(1)
+            filename = img_url.split('/')[-1]
+            print(f'Downloading file: {img_url}')
+            resp = requests.get(img_url)
+            image = resp.content
+            await message.channel.send(file=discord.File(io.BytesIO(image), filename))
 
     elif isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
         print("{}: {}".format(message.author.name, message.content))
