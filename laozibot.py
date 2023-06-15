@@ -169,50 +169,8 @@ async def on_message(message):
         return
 
     # Check if message is in a DM or the message starts with !g
-    if message.content.startswith('!relevantxkcd'):
-        prev_messages = []
-        async for m in message.channel.history(limit=2):
-            prev_messages.append(m)
-        previous_message = prev_messages[1].content
-
-        async with message.channel.typing():
-            response = openai.ChatCompletion.create(
-              model="gpt-3.5-turbo",
-              messages=[
-                    {"role": "system", "content": "You are RelevantXKCD bot. Your sole purpose is to provide links to xkcd comics relevant to the message given to you by the user, based on how well it matches with the information provided on the ExplainXKCD website. You must always respond with a link to an xkcd comic. When you don't know of a link to an xkcd comic relevant to the message, you must instead respond with the link 'https://xkcd.com/{number}' where {number} is a randomly chosen number between 1 and 2781. Your response is always just a single link, no explanation or justification, just one link per message that you send."},
-                    {"role": "user", "content": "Lol whenever I see the 'permission denied' message I always just throw sudo in front of it without thinking about it"},
-                    {"role": "assistant", "content": "https://xkcd.com/149"},
-                    {"role": "user", "content": "agaiheroaerjaeiogahoierhg;eigahi"},
-                    {"role": "assistant", "content": "https://xkcd.com/213"},
-                    {"role": "user", "content": previous_message}
-                ],
-                max_tokens=200,
-            )
-
-            result = response['choices'][0]['message']['content'].strip()
-            print(f'\n{message.author.name}: {previous_message}')
-            print(f'RelevantXKCD: {result}')
-            # Find link in result
-            try:
-                xkcd_link = re.search(r'https?:\/\/[^\s"\']+', result).group(0)
-            except:
-                await message.channel.send(result)
-                return
-            if result != xkcd_link:
-                await message.channel.send(result)
-
-            resp = requests.get(xkcd_link)
-            contents = resp.content
-            img_url = re.search(r'Image URL \(for hotlinking\/embedding\):.*?href=.*?"(.*?)"', contents.decode()).group(1)
-            filename = img_url.split('/')[-1]
-            print(f'Downloading file: {img_url}')
-            resp = requests.get(img_url)
-            image = resp.content
-            await message.channel.send(file=discord.File(io.BytesIO(image), filename))
-
-    elif isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
+    if isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
         print("{}: {}".format(message.author.name, message.content))
-
         if message.content.split(' ')[0] in command_list:
             text = run_command(message)
             print("laozibot: {}".format(text))
