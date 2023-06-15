@@ -68,65 +68,6 @@ def split_string(input_string):
     # Return the list of strings
     return new_strings
 
-async def schedule_reminder(user, duration, content, reminder_id):
-    # Wait until the reminder is due
-    await asyncio.sleep(duration)
-
-    # Send the reminder to the user
-    await user.send(f'Reminder: {content}')
-
-    # Delete the reminder from the database
-    db_conn.execute('DELETE FROM reminders WHERE id = ?', (reminder_id,))
-    db_conn.commit()
-
-    # Check for any remaining reminders that are due
-    for row in db_conn.execute('SELECT * FROM reminders WHERE remind_at <= ?', (int(datetime.utcnow().timestamp()),)):
-        user_id, remind_at, content, remaining_reminder_id = row
-        user = await client.fetch_user(int(user_id))
-        duration = max(remind_at - int(datetime.utcnow().timestamp()), 0)
-        asyncio.ensure_future(schedule_reminder(user, duration, content, remaining_reminder_id))
-
-def remind(message):
-    # Parse the reminder duration and message content
-    duration, content = message.content[3:].split(' ', 1)
-    # Convert the duration (in minutes) to seconds
-    if duration.endswith('s'):
-        duration = int(duration[:-1])
-    elif duration.endswith('m'):
-        duration = int(duration[:-1]) * 60
-    elif duration.endswith('h'):
-        duration = int(duration[:-1]) * 60 * 60
-    elif duration.endswith('d'):
-        duration = int(duration[:-1]) * 60 * 60 * 24
-    # Schedule the reminder
-    remind_at = int(message.created_at.timestamp()) + duration
-     # Store the reminder in the database and schedule it
-    cursor = db_conn.cursor()
-    cursor.execute('INSERT INTO reminders (user_id, remind_at, content) VALUES (?, ?, ?)', (str(message.author.id), remind_at, content))
-    db_conn.commit()
-    reminder_id = cursor.lastrowid
-    cursor.close()
-    asyncio.ensure_future(schedule_reminder(message.author, duration, content, reminder_id))
-
-def weather(message):
-    cmd = message.content.split(' ')
-    user = message.author.id
-
-    if len(cmd) == 1:
-        if not get_user(db_conn, user):
-            return "You're not registered, to register type '!w <location>'"
-        elif not get_location(db_conn, user):
-            return "You need to add a location for yourself '!w <location>'"
-    elif len(cmd) > 1:
-        location = cmd[1]
-        if not get_user(db_conn, user):
-            add_user(db_conn, user, location)
-        else:
-            update_location(db_conn, user, location)
-    else:
-        return "Invalid command"
-
-    return "Location updated"
 
 def clear_chat(message):
     user = message.author.id
@@ -134,18 +75,6 @@ def clear_chat(message):
     c.execute("DELETE FROM history WHERE name = ? OR rec = ?", (user, user))
     db_conn.commit()
     return "Chat cleared"
-
-def run_command(message):
-    cmd = message.content.split(' ')[0]
-    if cmd == '!r':
-        remind(message)
-        return "Reminder Set"
-    elif cmd == '!w':
-        return weather(message)
-    elif cmd == '!clear':
-        return clear_chat(message)
-    else:
-        return "Command Error. Idk how you got here."
 
 # This is essential for any blocking function being run during message response.
 async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typing.Any:
