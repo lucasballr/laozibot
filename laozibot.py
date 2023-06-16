@@ -1,33 +1,15 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import discord
 from discord.ext import commands
-import os
-import io
-import requests
-import openai, config
-import asyncio
-import sqlite3
-import re
-from datetime import datetime, timedelta
-import json
-from w6 import get_user, get_weather, get_location, update_location, add_user
 from gpt import ask_gpt
-import typing
-import functools
+from dotenv import load_dotenv
+from db import *
+from helpers import *
 
-openai.api_key = config.OPENAI_API_KEY
-discord_api_key = config.DISCORD_API_KEY
-
-# Connect to the database
-db_conn = sqlite3.connect('laozidb.db')
-db_conn.execute('CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, remind_at INTEGER, content TEXT)')
-db_conn.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, location TEXT)''')
-command_list = ['!r', '!w', '!clear']
-init_message = [{'role':'system', 'content':'You are a helpful AI assistant named laozibot. You must respond to every message in under 2000 characters, so make sure each message contains all of the necessary information.'}]
-reminders = {}
-messages = init_message
-users = {}
+load_dotenv()
+discord_api_key: str = os.getenv("DISCORD_API_KEY")
+bot_id = 1002682398657478676
 
 # Define  bot's intents
 intents = discord.Intents.all()
@@ -36,90 +18,169 @@ intents.members = True  # Subscribe to the privileged members intent
 # Create a new instance of the bot client
 client = commands.Bot(command_prefix='!', intents=intents)
 
-def extract_code(text):
-    pattern = r'(```[\s\S]+?```)'  # Add capturing group with parentheses
-    segments = re.split(pattern, text)
-    return segments
-
-def split_string(input_string):
-    max_size = 2000
-    # check if there is a code block in the output
-    if '```' in input_string:
-        input_string = extract_code(input_string)
+@client.command(name="remove_admin")
+async def _remove_admin(ctx, *arg):
+    if ctx.author == client.user:
+        return
+    if not check_admin(ctx.author):
+        embed = discord.Embed(title="Laozibot", description="You are not a registered admin", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    if len(arg) < 1 or len(arg) > 1:
+        embed = discord.Embed(title="Laozibot", description="Format: !remove_admin <user_id>", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
     else:
-        input_string = [input_string]
-
-    # Loop through the resulting strings and split the string if it is too long.
-    new_strings = []
-    for s in input_string:
-        if len(s) >= max_size:
-            s = s.split('\n')
-            mes = ""
-            for line in s:
-                if len(mes) + len(line) >= max_size:
-                    new_strings.append(mes)
-                    mes = line + "\n"
-                else:
-                    mes += line + "\n"
-            new_strings.append(mes)
+        try:
+            user_id = int(arg[0])
+        except:
+            return
+        user = client.get_user(user_id)
+        if user and check_user(user):
+            remove_admin(user_id)
+            embed = discord.Embed(title="Laozibot", description="User {} is no longer admin".format(user), color=0x00ff00)
+            await ctx.send(embed=embed)
+            return
         else:
-            new_strings.append(s)
+            embed = discord.Embed(title="Laozibot", description="User not found", color=0xff0000)
+            await ctx.send(embed=embed)
+            return
 
-    # Return the list of strings
-    return new_strings
+@client.command(name="make_admin")
+async def _make_admin(ctx, *arg):
+    if ctx.author == client.user:
+        return
+    if not check_admin(ctx.author):
+        embed = discord.Embed(title="Laozibot", description="You are not a registered admin", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    if len(arg) < 1 or len(arg) > 1:
+        embed = discord.Embed(title="Laozibot", description="Format: !make_admin <user_id>", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    else:
+        try:
+            user_id = int(arg[0])
+        except:
+            return
+        user = client.get_user(user_id)
+        if user and check_user(user):
+            make_admin(user_id)
+            embed = discord.Embed(title="Laozibot", description="User {} is now admin".format(user), color=0x00ff00)
+            await ctx.send(embed=embed)
+            return
+        else:
+            embed = discord.Embed(title="Laozibot", description="User not found", color=0xff0000)
+            await ctx.send(embed=embed)
+            return
 
+@client.command(name="add_user")
+async def _add_user(ctx, *arg):
+    if ctx.author == client.user:
+        return
+    if not check_admin(ctx.author):
+        embed = discord.Embed(title="Laozibot", description="You are not a registered admin", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    if len(arg) < 1 or len(arg) > 1:
+        embed = discord.Embed(title="Laozibot", description="Format: !add_user <user_id>", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    else:
+        try:
+            user_id = int(arg[0])
+        except:
+            return
+        user = client.get_user(user_id)
+        if user:
+            add_user(user, user_id)
+            embed = discord.Embed(title="Laozibot", description="User {} added".format(user), color=0x00ff00)
+            await ctx.send(embed=embed)
+            return
+        else:
+            embed = discord.Embed(title="Laozibot", description="User not found", color=0xff0000)
+            await ctx.send(embed=embed)
+            return
 
-def clear_chat(message):
-    user = message.author.id
-    c = db_conn.cursor()
-    c.execute("DELETE FROM history WHERE name = ? OR rec = ?", (user, user))
-    db_conn.commit()
-    return "Chat cleared"
+@client.command(name="del_user")
+async def _del_user(ctx, *arg):
+    if ctx.author == client.user:
+        return
+    if not check_admin(ctx.author):
+        embed = discord.Embed(title="Laozibot", description="You are not a registered admin", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    if len(arg) < 1 or len(arg) > 1:
+        embed = discord.Embed(title="Laozibot", description="Format: !del_user <user_id>", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    else:
+        try:
+            user_id = int(arg[0])
+        except:
+            return
+        user = client.get_user(user_id)
+        if user and check_user(user):
+            del_user(user_id)
+            embed = discord.Embed(title="Laozibot", description="User {} removed".format(user), color=0x00ff00)
+            await ctx.send(embed=embed)
+            return
+        else:
+            embed = discord.Embed(title="Laozibot", description="User not found", color=0xff0000)
+            await ctx.send(embed=embed)
+            return
 
-# This is essential for any blocking function being run during message response.
-async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typing.Any:
-    # Runs a blocking function in a non-blocking way
-    func = functools.partial(blocking_func, *args, **kwargs) # `run_in_executor` doesn't support kwargs, `functools.partial` does
-    return await client.loop.run_in_executor(None, func)
+@client.command(name="clear")
+async def _clear(ctx):
+    if ctx.author == client.user:
+        return
+    if not check_user(ctx.author):
+        embed = discord.Embed(title="Laozibot", description="You are not a registered user", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    clear_chats(ctx.author.id)
+    embed = discord.Embed(title="Laozibot", description="Chat history cleared", color=0x00ff00)
+    await ctx.send(embed=embed)
 
-@client.event
-async def on_ready():
-    print("Logged in as {0.user}".format(client))
-    # Remember the reminders
-    for row in db_conn.execute('SELECT * FROM reminders WHERE remind_at > ?', (int(discord.utils.time_snowflake(datetime.utcnow() - timedelta(minutes=1))),)):
-        user_id, remind_at, content = row[1:]
-        user = await client.fetch_user(int(user_id))
-        duration = max(remind_at - int(datetime.utcnow().timestamp()), 0)
-        asyncio.ensure_future(schedule_reminder(user, duration, content, row[0]))
-
+@client.command(name="g")
+async def _g(ctx, *arg):
+    if ctx.author == client.user:
+        return
+    if not check_user(ctx.author):
+        embed = discord.Embed(title="Laozibot", description="You do not have permission for this", color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+    if arg:
+        ' '.join(arg)
+    else:
+        embed = discord.Embed(title="Laozibot", description="Format: !g <message>", color=0xff0000)
+        await ctx.send(embed=embed)
+    add_chat(ctx.author.id, arg, ctx.author.id, bot_id)
+    async with message.channel.typing():
+        response = ask_gpt(ctx.author.id)
+    print("{}: {}".format(ctx.author.name, arg))
+    print("Laozibot: {}".format(response))
+    for i in split_string(response):
+        await ctx.send(i)
+    
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
-
-    # Check if message is in a DM or the message starts with !g
-    if isinstance(message.channel, discord.DMChannel) or message.content.startswith('!g'):
-        print("{}: {}".format(message.author.name, message.content))
-        if message.content.split(' ')[0] in command_list:
-            text = run_command(message)
-            print("laozibot: {}".format(text))
-            embed = discord.Embed()
-            embed.add_field(name="Command Response", value=text, inline=False)
+    
+    if isinstance(message.channel, discord.DMChannel) and not message.content.startswith("!"):
+        if not check_user(message.author):
+            embed = discord.Embed(title="Laozibot", description="You do not have permission for this", color=0xff0000)
             await message.channel.send(embed=embed)
-        else:
-            loc = get_location(db_conn, message.author.id)
-            info = "Current Location: {}, {}".format(loc, get_weather(loc))
-            async with message.channel.typing():
-                gpt_res = await run_blocking(ask_gpt, message, info)
-            output = split_string(gpt_res)
-            for i in output:
-                if i != "":
-                    print("laozibot: {}".format(i))
-                    await message.channel.send(i)
-
-    # This checks if a command has been run, but I can replace this with commands.Bot
-    elif message.content.split(' ')[0] in command_list:
+            return
+        add_chat(message.author.id, message.content, message.author.id, bot_id)
+        async with message.channel.typing():
+            response = ask_gpt(message.author.id)
         print("{}: {}".format(message.author.name, message.content))
-        run_command(message)
+        print("Laozibot: {}".format(response))
+        for i in split_string(response):
+            await message.channel.send(i)
+    else:
+        await client.process_commands(message)
 
 client.run(discord_api_key)

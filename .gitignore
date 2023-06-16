@@ -4,3 +4,4 @@ config.py
 history.txt
 approved_users.txt
 *.bak
+.env
