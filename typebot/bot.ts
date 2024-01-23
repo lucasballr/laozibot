@@ -41,11 +41,8 @@ const client = new Client({ intents: [
 client.once('ready', () => {
     console.log('Ready!');
     console.log(`Logged in as ${client.user?.tag}!. Here is my ID: ${client.user?.id}!`)
-    console.log("Here are my guild id's");
-    let guildIds = client.guilds;
-    for (let guildId in guildIds){
-        console.log(guildId);
-    }
+    const Guilds = client.guilds.cache.map(guild => guild.id);
+    console.log(`Here are my guild id's ${Guilds}`);
 });
 
 client.on('messageCreate', message => {
