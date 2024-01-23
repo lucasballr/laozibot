@@ -1,0 +1,8 @@
+services:
+  laozibot:
+    container_name: laozibot
+    image: laozibot:latest
+    build: .
+    volumes:
+      - ./laozibot.db:/usr/src/bot/laozibot.db
+      - ./pz:/usr/src/bot/pz

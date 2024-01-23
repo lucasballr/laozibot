@@ -1,0 +1,1 @@
+install link: https://discord.com/api/oauth2/authorize?client_id=1199477265457758239&permissions=8&scope=bot
