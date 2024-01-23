@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 const token = process.env.DISCORD_TOKEN
+const clientId = process.env.CLIENT_ID
+const guildId = process.env.GUILD_ID
 
 const commands = [
   {
@@ -13,12 +15,19 @@ const commands = [
 
 const rest = new REST({ version: '10' }).setToken(token!);
 
-try {
-  console.log('Started refreshing application (/) commands.');
+(async () => {
+	try {
+		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-  await rest.put(Routes.applicationCommands('1199477265457758239'), { body: commands });
+		// The put method is used to fully refresh all commands in the guild with the current set
+		const data = await rest.put(
+			Routes.applicationGuildCommands(clientId!, guildId),
+			{ body: commands },
+		);
 
-  console.log('Successfully reloaded application (/) commands.');
-} catch (error) {
-  console.error(error);
-}
+		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+	} catch (error) {
+		// And of course, make sure you catch and log any errors!
+		console.error(error);
+	}
+})();
