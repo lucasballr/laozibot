@@ -52,13 +52,8 @@ client.on('interactionCreate', async interaction => {
             return;
         }
         try {
-            const queue = player.createQueue(interaction.guild, {
-                metadata: {
-                    channel: interaction.channel
-                }
-            });
-            await queue.join(voiceChannel);
-            const song = await queue.play(youtubeLink);
+            await player.join(voiceChannel);
+            const song = await player.play(youtubeLink);
 
             await interaction.reply(`Playing: ${song.name}`);
         } catch (error) {
