@@ -54,6 +54,11 @@ client.on('interactionCreate', async interaction => {
             connection.subscribe(player);
             player.play(resource);
             await interaction.reply(`Now playing: ${youtubeLink}`);
+            
+            connection.on(VoiceConnectionStatus.Ready, () => {
+                console.log('The connection is ready to play audio!');
+            });
+
             player.on(AudioPlayerStatus.Idle, () => {
                 connection.destroy();
             });
@@ -61,7 +66,11 @@ client.on('interactionCreate', async interaction => {
             console.error(error);
             await interaction.reply('Error playing the audio.');
         }
-    } 
+    }
+    if (interaction.commandName === 'stop'){
+        const voice = require('@discordjs/voice');
+        await voice.getVoiceConnection(interaction.guildId).disconnect();
+    }
 });
 
 client.login(token!);

@@ -33,6 +33,10 @@ const commands = [
       required: true,
     }],
   },
+  {
+    name: 'stop',
+    description: 'Stops the music',
+  },
 ];
 
 const rest = new REST({ version: '10' }).setToken(token!);
