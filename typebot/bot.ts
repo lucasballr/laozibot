@@ -3,7 +3,8 @@ import { getVoiceConnection, joinVoiceChannel, createAudioPlayer, createAudioRes
 import dotenv from 'dotenv';
 import ytdl from 'ytdl-core';
 //import Player from 'discord-player'
-const { Player } = require('discord-player');
+const { YouTubeExtractor } = require('@discord-player/extractor');
+const { useMainPlayer } = require('discord-player');
 import fs from 'fs';
 //const fs = require('fs');
 
@@ -34,7 +35,8 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.commandName === 'play') {
         const youtubeLink = interaction.options.getString('link');
-        const player = new Player(client);
+        const player = useMainPlayer();
+        player.extractors.register(YouTubeExtractor);
         const guild = client.guilds.cache.get(interaction.guildId!)
         const member = guild!.members.cache.get(interaction.member!.user.id);
         const voiceChannel = member!.voice.channel;
