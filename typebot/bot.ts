@@ -45,16 +45,14 @@ client.on('interactionCreate', async interaction => {
         }
         try {
             const { song } = await player.play(voiceChannel, youtubeLink);
-            await interaction.reply(`Playing: ${song.name}`);
+            await interaction.reply(`Playing: ${song.title}`);
         } catch (error) {
             console.error(error);
             await interaction.reply('Error occurred while trying to play the audio.');
         }
     }
     if (interaction.commandName === 'stop'){
-        let connection = getVoiceConnection(interaction.guildId!);
-        connection?.disconnect();
-        await interaction.reply('Bye');
+        await player.stop();
     }
 });
 
