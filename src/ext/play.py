@@ -6,7 +6,21 @@ class Play(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="stop", help="Play something from YouTube")
+    @commands.command(name="pause", help="Pause playing from YouTube")
+    async def pause(self, ctx):
+        if ctx.author == self.bot.user:
+            return
+        if ctx.voice_client.is_playing():
+            await ctx.voice_client.pause()
+
+    @commands.command(name="resume", help="Resume playing from YouTube")
+    async def resume(self, ctx):
+        if ctx.author == self.bot.user:
+            return
+        if ctx.voice_client.is_playing():
+            await ctx.voice_client.resume()
+
+    @commands.command(name="stop", help="Stop playing from YouTube")
     async def stop(self, ctx):
         if ctx.author == self.bot.user:
             return
