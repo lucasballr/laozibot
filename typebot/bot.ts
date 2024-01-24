@@ -2,35 +2,13 @@ import { Client, GatewayIntentBits } from 'discord.js';
 import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 
+var ytdl = require('ytdl-core');
+const fs = require('fs');
+
 dotenv.config();
+const { createAudioPlayer } = require('@discordjs/voice');
 const token = process.env.DISCORD_TOKEN
-//const clientId = '1199477265457758239'
-
-const commands = [
-  {
-    name: 'ping',
-    description: 'Replies with Pong!',
-  },
-];
-
-const rest = new REST({ version: '10' }).setToken(token!);
-
-// (async () => {
-//     try {
-//         console.log(`Started refreshing ${commands.length} application (/) commands.`);
-
-//         // The put method is used to fully refresh all commands in the guild with the current set
-//         const data = await rest.put(
-//             Routes.applicationGuildCommands(clientId!, guildId),
-//             { body: commands },
-//         );
-
-//         console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-//     } catch (error) {
-//         // And of course, make sure you catch and log any errors!
-//         console.error(error);
-//     }
-// })();
+const player = createAudioPlayer();
 
 const client = new Client({ intents: [
 		GatewayIntentBits.Guilds,
@@ -51,6 +29,11 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === 'ping') {
       await interaction.reply('Pong!');
     }
+
+    if (interaction.commandName === 'play') {
+        console.log(interaction);
+    }
+    
 });
 
 client.login(token!);
