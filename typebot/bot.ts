@@ -45,7 +45,7 @@ client.on('interactionCreate', async interaction => {
         }
         try {
             const { song } = await player.play(voiceChannel, youtubeLink);
-            await interaction.reply(`Playing: ${song.title}`);
+            await interaction.reply(`Playing: ${youtubeLink}`);
         } catch (error) {
             console.error(error);
             await interaction.reply('Error occurred while trying to play the audio.');
@@ -53,6 +53,7 @@ client.on('interactionCreate', async interaction => {
     }
     if (interaction.commandName === 'stop'){
         await player.destroy();
+        await interaction.reply('Bye');
     }
 });
 
