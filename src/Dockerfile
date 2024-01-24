@@ -1,6 +1,6 @@
 FROM debian:12
 ##FROM gorialis/discord.py
-RUN apt update && apt install -y python3-pip ffmpeg
+RUN apt update && apt install -y python3-pip python3-venv ffmpeg
 
 RUN mkdir -p /usr/src/bot
 
