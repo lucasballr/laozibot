@@ -1,8 +1,10 @@
 import { Client, GatewayIntentBits, VoiceChannel } from 'discord.js';
 import { getVoiceConnection, joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } from '@discordjs/voice';
 import dotenv from 'dotenv';
-import ytdl from 'ytdl-core-discord';
-
+import ytdl from 'ytdl-core';
+//import Player from 'discord-player'
+const { Player } = require('discord-player');
+import fs from 'fs';
 //const fs = require('fs');
 
 dotenv.config();
@@ -31,45 +33,36 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.commandName === 'play') {
         const youtubeLink = interaction.options.getString('link');
-        if (!ytdl.validateURL(youtubeLink!)) {
-            await interaction.reply('Invalid YouTube URL.');
-            return;
-        }
+        const player = new Player(client);
         const guild = client.guilds.cache.get(interaction.guildId!)
         const member = guild!.members.cache.get(interaction.member!.user.id);
         const voiceChannel = member!.voice.channel;
         if (!voiceChannel) {
             await interaction.reply('You need to be in a voice channel to play music!');
             return;
-        } 
+        }
 
+        if (!player.createQueue(interaction.guild, {
+            metadata: {
+                channel: interaction.channel
+            }
+        }).join(voiceChannel)) {
+            await interaction.reply('Could not join your voice channel!');
+            return;
+        }
         try {
-            const connection = joinVoiceChannel({
-                channelId: voiceChannel!.id,
-                guildId: interaction.guildId!,
-                adapterCreator: guild!.voiceAdapterCreator,
+            const queue = player.createQueue(interaction.guild, {
+                metadata: {
+                    channel: interaction.channel
+                }
             });
+            await queue.join(voiceChannel);
+            const song = await queue.play(youtubeLink);
 
-            const audioPlayer = createAudioPlayer();
-            const resource = createAudioResource(await ytdl(youtubeLink!));
-            resource.volume?.setVolume(1);
-            await interaction.reply(`Now playing: ${youtubeLink}`);
-            connection.subscribe(audioPlayer);
-            // const player = createAudioPlayer();
-            // connection.subscribe(player);
-            // player.play(resource);
-            // await interaction.reply(`Now playing: ${youtubeLink}`);
-            
-            // connection.on(VoiceConnectionStatus.Ready, () => {
-            //     console.log('The connection is ready to play audio!');
-            // });
-
-            // player.on(AudioPlayerStatus.Idle, () => {
-            //     connection.destroy();
-            // });
+            await interaction.reply(`Playing: ${song.name}`);
         } catch (error) {
             console.error(error);
-            await interaction.reply('Error playing the audio.');
+            await interaction.reply('Error occurred while trying to play the audio.');
         }
     }
     if (interaction.commandName === 'stop'){
