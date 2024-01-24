@@ -10,8 +10,8 @@ class Play(commands.Cog):
     async def stop(self, ctx):
         if ctx.author == self.bot.user:
             return
-        if self.voice_client.is_connected():
-            await self.voice_channel.disconnect()
+        if ctx.voice_client.is_connected():
+            await ctx.voice_channel.disconnect()
 
     @commands.command(name="play", help="Play something from YouTube")
     async def play(self, ctx):
