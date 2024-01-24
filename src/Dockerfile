@@ -10,8 +10,6 @@ COPY ./requirements.txt /usr/src/bot
 COPY ext/ /usr/src/bot/ext/
 WORKDIR /usr/src/bot
 
-RUN python3 -m venv .venv
-RUN . .venv/bin/activate
-RUN pip3 install -r /usr/src/bot/requirements.txt
+RUN pip3 install -r /usr/src/bot/requirements.txt --break-system-packages
 
 CMD ["python3", "-u", "/usr/src/bot/laozibot.py"]
