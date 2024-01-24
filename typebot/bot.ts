@@ -4,10 +4,9 @@ import dotenv from 'dotenv';
 import ytdl from 'ytdl-core';
 //import Player from 'discord-player'
 const { YouTubeExtractor } = require('@discord-player/extractor');
-const { useMainPlayer } = require('discord-player');
+const { Player } = require('discord-player');
 import fs from 'fs';
 //const fs = require('fs');
-const player = useMainPlayer();
 dotenv.config();
 let connection;
 const token = process.env.DISCORD_TOKEN;
@@ -18,6 +17,7 @@ const client = new Client({ intents: [
         'GuildVoiceStates',
 	],
 });
+const player = new Player(client);
 
 client.once('ready', () => {
     console.log('Ready!');
