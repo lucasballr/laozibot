@@ -13,7 +13,7 @@ const commands = [
   },
   {
     name: 'play',
-    description: 'Plays music from YouTube'
+    description: 'Plays music from YouTube',
   },
 ];
 

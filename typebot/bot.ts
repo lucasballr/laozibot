@@ -33,7 +33,6 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === 'play') {
         console.log(interaction);
     }
-    
 });
 
 client.login(token!);
