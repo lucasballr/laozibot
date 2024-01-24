@@ -43,9 +43,7 @@ client.on('interactionCreate', async interaction => {
             return;
         }
         try {
-            await player.join(voiceChannel);
-            const song = await player.play(youtubeLink);
-
+            const { song } = await player.play(voiceChannel, youtubeLink);
             await interaction.reply(`Playing: ${song.name}`);
         } catch (error) {
             console.error(error);
