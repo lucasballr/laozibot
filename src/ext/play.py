@@ -5,6 +5,7 @@ import yt_dlp
 class Play(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.source = discord.FFmpegPCMAudio(source='https://www.youtube.com/watch?v=dQw4w9WgXcQ',before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",options="-vn")
 
     @commands.command(name="pause", help="Pause playing from YouTube")
     async def pause(self, ctx):
@@ -61,9 +62,9 @@ class Play(commands.Cog):
                 info = ydl.extract_info(message, download=False)
                 url2 = info['url']
                 print(url2)
-                source = discord.FFmpegPCMAudio(source=url2,before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",options="-vn")
+                self.source = discord.FFmpegPCMAudio(source=url2,before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",options="-vn")
                 vc = ctx.voice_client
-                vc.play(source)
+                vc.play(self.source)
 
             embed = discord.Embed(title="Playing", color=discord.Color.blue())
             await ctx.send(embed=embed)
