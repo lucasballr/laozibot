@@ -4,5 +4,7 @@ services:
     image: laozibot:latest
     build: .
     volumes:
+      - ./laozibot.py:/usr/src/bot/laozibot.py
+      - ./ext/:/usr/src/bot/ext/
       - ./laozibot.db:/usr/src/bot/laozibot.db
       - ./pz:/usr/src/bot/pz

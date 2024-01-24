@@ -2,4 +2,4 @@ discord.py==2.3.2
 openai==1.9.0
 paramiko==3.3.1
 tiktoken==0.5.1
-youtube_dl==2021.12.17
+yt_dlp==2023.12.30

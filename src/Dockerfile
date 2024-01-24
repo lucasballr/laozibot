@@ -5,9 +5,9 @@ RUN apt update && apt install -y python3-pip python3-venv ffmpeg
 RUN mkdir -p /usr/src/bot
 
 COPY ./config.py /usr/src/bot
-COPY ./laozibot.py /usr/src/bot
+#COPY ./laozibot.py /usr/src/bot
 COPY ./requirements.txt /usr/src/bot
-COPY ext/ /usr/src/bot/ext/
+#COPY ext/ /usr/src/bot/ext/
 WORKDIR /usr/src/bot
 
 RUN pip3 install -r /usr/src/bot/requirements.txt --break-system-packages
