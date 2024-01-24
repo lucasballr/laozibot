@@ -6,6 +6,18 @@ const token = process.env.DISCORD_TOKEN
 const clientId = process.env.CLIENT_ID
 const guildId = process.env.GUILD_ID
 
+// SUB_COMMAND 1   
+// SUB_COMMAND_GROUP 2 
+// STRING 3    
+// INTEGER 4
+// BOOLEAN 5   
+// USER 6  
+// CHANNEL 7
+// ROLE 8  
+// MENTIONABLE 9
+// NUMBER 10
+// ATTACHMENT 11
+
 const commands = [
   {
     name: 'ping',
@@ -16,7 +28,7 @@ const commands = [
     description: 'Plays music from YouTube',
     options: [{
       name: 'link',
-      type: 'STRING',
+      type: 3,
       description: 'The YouTube link',
       required: true,
     }],
