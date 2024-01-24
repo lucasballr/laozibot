@@ -1,5 +1,6 @@
-FROM python:3
-FROM gorialis/discord.py
+FROM python:3-alpine
+##FROM gorialis/discord.py
+RUN apk add  --no-cache ffmpeg
 
 RUN mkdir -p /usr/src/bot
 
