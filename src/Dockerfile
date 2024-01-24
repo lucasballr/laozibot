@@ -1,6 +1,6 @@
-FROM python:3-alpine
+FROM debian:12
 ##FROM gorialis/discord.py
-RUN apk add  --no-cache ffmpeg
+RUN apt install -y python3 ffmpeg python3-pip
 
 RUN mkdir -p /usr/src/bot
 
@@ -10,6 +10,6 @@ COPY ./requirements.txt /usr/src/bot
 COPY ext/ /usr/src/bot/ext/
 WORKDIR /usr/src/bot
 
-RUN pip install -r /usr/src/bot/requirements.txt
+RUN pip3 install -r /usr/src/bot/requirements.txt
 
 CMD ["python3", "-u", "/usr/src/bot/laozibot.py"]
