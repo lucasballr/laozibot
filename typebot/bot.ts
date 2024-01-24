@@ -6,7 +6,7 @@ var ytdl = require('ytdl-core');
 const fs = require('fs');
 
 dotenv.config();
-const { createAudioPlayer } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 const token = process.env.DISCORD_TOKEN
 const player = createAudioPlayer();
 
@@ -31,17 +31,45 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (interaction.commandName === 'play') {
-        const text = interaction.options.getString('link');
-        const re = /http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?/;
-        const match = text?.match(re);
+        const youtubeLink = interaction.options.getString('link');
+        if (!ytdl.validateURL(youtubeLink)) {
+            await interaction.reply('Invalid YouTube URL.');
+            return;
+        }
+        const guild = client.guilds.cache.get(interaction.guildId!)
+        const member = guild!.members.cache.get(interaction.member!.user.id);
+        const voiceChannel = member?.voice.channel;
+        if (!voiceChannel) {
+            await interaction.reply('You need to be in a voice channel to play music!');
+            return;
+        } 
+        
+        try {
+            const connection = joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: interaction.guildId,
+                adapterCreator: interaction.guild!.voiceAdapterCreator,
+            });
+            const stream = ytdl(youtubeLink, { filter: 'audioonly' });
+            const resource = createAudioResource(stream);
+            const player = createAudioPlayer();
+            player.play(resource);
+            connection.subscribe(player);
 
-        if (match && match[0]){
-            const link = match[0]; // This is the extracted YouTube link
-            await interaction.reply(`Found a YouTube link: ${link}`);
-        } else {
-            await interaction.reply(`No valid YouTube link found in the text.`);
-        }   
-    }
+            await interaction.reply(`Now playing: ${youtubeLink}`);
+
+            player.on(AudioPlayerStatus.Idle, () => {
+                connection.destroy();
+            });
+
+            connection.on(VoiceConnectionStatus.Disconnected, () => {
+                connection.destroy();
+            });
+        } catch (error) {
+            console.error(error);
+            await interaction.reply('Error playing the audio.');
+        }
+    } 
 });
 
 client.login(token!);
