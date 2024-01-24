@@ -10,8 +10,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@discord-player/extractor": "^4.4.6",
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/voice": "^0.16.1",
+    "discord-player": "^6.6.7",
     "discord.js": "^14.14.1",
-    "dotenv": "^16.4.0"
+    "dotenv": "^16.4.0",
+    "ffmpeg-static": "^5.2.0",
+    "install": "^0.13.0",
+    "npm": "^10.3.0",
+    "youtube-ext": "^1.1.16",
+    "ytdl": "^1.4.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.5"
