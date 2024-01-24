@@ -1,5 +1,4 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 
 var ytdl = require('ytdl-core');
@@ -56,6 +55,7 @@ client.on('interactionCreate', async interaction => {
             player.play(resource);
             connection.subscribe(player);
             await interaction.reply(`Now playing: ${youtubeLink}`);
+            connection.destroy();
         } catch (error) {
             console.error(error);
             await interaction.reply('Error playing the audio.');
