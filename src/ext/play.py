@@ -7,7 +7,7 @@ class Play(commands.Cog):
         self.bot = bot
 
     @commands.command(name="stop", help="Play something from YouTube")
-    async def todo(self, ctx):
+    async def stop(self, ctx):
         if ctx.author == self.bot.user:
             return
         if ctx.voice_client is None:
@@ -15,7 +15,7 @@ class Play(commands.Cog):
         self.voice_channel.disconnect()
 
     @commands.command(name="play", help="Play something from YouTube")
-    async def todo(self, ctx):
+    async def play(self, ctx):
         if ctx.author == self.bot.user:
             return
         else:
