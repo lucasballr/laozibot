@@ -7,7 +7,6 @@ const fs = require('fs');
 dotenv.config();
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 const token = process.env.DISCORD_TOKEN
-const player = createAudioPlayer();
 
 const client = new Client({ intents: [
 		GatewayIntentBits.Guilds,
@@ -52,10 +51,12 @@ client.on('interactionCreate', async interaction => {
             const stream = ytdl(youtubeLink, { filter: 'audioonly' });
             const resource = createAudioResource(stream);
             const player = createAudioPlayer();
-            player.play(resource);
             connection.subscribe(player);
+            player.play(resource);
             await interaction.reply(`Now playing: ${youtubeLink}`);
-            connection.destroy();
+            player.on(AudioPlayerStatus.Idle, () => {
+                connection.destroy();
+            });
         } catch (error) {
             console.error(error);
             await interaction.reply('Error playing the audio.');
