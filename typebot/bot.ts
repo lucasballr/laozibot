@@ -1,11 +1,12 @@
 import { Client, GatewayIntentBits, VoiceChannel } from 'discord.js';
 import { getVoiceConnection, joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } from '@discordjs/voice';
 import dotenv from 'dotenv';
+import ytdl from 'ytdl-core-discord';
 
-var ytdl = require('ytdl-core');
-const fs = require('fs');
+//const fs = require('fs');
 
 dotenv.config();
+let connection;
 const token = process.env.DISCORD_TOKEN;
 
 const client = new Client({ intents: [
@@ -30,38 +31,42 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.commandName === 'play') {
         const youtubeLink = interaction.options.getString('link');
-        if (!ytdl.validateURL(youtubeLink)) {
+        if (!ytdl.validateURL(youtubeLink!)) {
             await interaction.reply('Invalid YouTube URL.');
             return;
         }
         const guild = client.guilds.cache.get(interaction.guildId!)
         const member = guild!.members.cache.get(interaction.member!.user.id);
-        const voiceChannel = member?.voice.channel;
+        const voiceChannel = member!.voice.channel;
         if (!voiceChannel) {
             await interaction.reply('You need to be in a voice channel to play music!');
             return;
         } 
-        
+
         try {
             const connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
+                channelId: voiceChannel!.id,
                 guildId: interaction.guildId!,
-                adapterCreator: interaction.guild!.voiceAdapterCreator,
-            });
-            const stream = ytdl(youtubeLink, { filter: 'audioonly' });
-            const resource = createAudioResource(stream);
-            const player = createAudioPlayer();
-            connection.subscribe(player);
-            player.play(resource);
-            await interaction.reply(`Now playing: ${youtubeLink}`);
-            
-            connection.on(VoiceConnectionStatus.Ready, () => {
-                console.log('The connection is ready to play audio!');
+                adapterCreator: guild!.voiceAdapterCreator,
             });
 
-            player.on(AudioPlayerStatus.Idle, () => {
-                connection.destroy();
-            });
+            const audioPlayer = createAudioPlayer();
+            const resource = createAudioResource(await ytdl(youtubeLink!));
+            resource.volume!.setVolume(1);
+            await interaction.reply(`Now playing: ${youtubeLink}`);
+            connection.subscribe(audioPlayer);
+            // const player = createAudioPlayer();
+            // connection.subscribe(player);
+            // player.play(resource);
+            // await interaction.reply(`Now playing: ${youtubeLink}`);
+            
+            // connection.on(VoiceConnectionStatus.Ready, () => {
+            //     console.log('The connection is ready to play audio!');
+            // });
+
+            // player.on(AudioPlayerStatus.Idle, () => {
+            //     connection.destroy();
+            // });
         } catch (error) {
             console.error(error);
             await interaction.reply('Error playing the audio.');
