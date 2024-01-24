@@ -31,8 +31,16 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (interaction.commandName === 'play') {
-        const link = interaction.options.getString('link');
-        await interaction.reply(`You want to play ${link}`);
+        const text = interaction.options.getString('link');
+        const re = /http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?/;
+        const match = text?.match(re);
+
+        if (match && match[0]){
+            const link = match[0]; // This is the extracted YouTube link
+            await interaction.reply(`Found a YouTube link: ${link}`);
+        } else {
+            await interaction.reply(`No valid YouTube link found in the text.`);
+        }   
     }
 });
 
