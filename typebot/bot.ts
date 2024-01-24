@@ -42,15 +42,6 @@ client.on('interactionCreate', async interaction => {
             await interaction.reply('You need to be in a voice channel to play music!');
             return;
         }
-
-        if (!player.createQueue(interaction.guild, {
-            metadata: {
-                channel: interaction.channel
-            }
-        }).join(voiceChannel)) {
-            await interaction.reply('Could not join your voice channel!');
-            return;
-        }
         try {
             await player.join(voiceChannel);
             const song = await player.play(youtubeLink);
