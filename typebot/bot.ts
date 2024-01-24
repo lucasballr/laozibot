@@ -45,11 +45,12 @@ client.once('ready', () => {
     console.log(`Here are my guild id's ${Guilds}`);
 });
 
-client.on('messageCreate', message => {
-    if (message.content === 'ping') {
-        message.reply('pong');
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+  
+    if (interaction.commandName === 'ping') {
+      await interaction.reply('Pong!');
     }
 });
-
 
 client.login(token!);
