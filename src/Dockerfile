@@ -11,7 +11,7 @@ COPY ext/ /usr/src/bot/ext/
 WORKDIR /usr/src/bot
 
 RUN python3 -m venv .venv
-RUN source .venv/bin/activate
+RUN . .venv/bin/activate
 RUN pip3 install -r /usr/src/bot/requirements.txt
 
 CMD ["python3", "-u", "/usr/src/bot/laozibot.py"]
