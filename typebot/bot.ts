@@ -52,7 +52,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
     if (interaction.commandName === 'stop'){
-        await player.stop();
+        await player.destroy();
     }
 });
 
