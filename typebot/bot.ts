@@ -55,16 +55,7 @@ client.on('interactionCreate', async interaction => {
             const player = createAudioPlayer();
             player.play(resource);
             connection.subscribe(player);
-
             await interaction.reply(`Now playing: ${youtubeLink}`);
-
-            player.on(AudioPlayerStatus.Idle, () => {
-                connection.destroy();
-            });
-
-            connection.on(VoiceConnectionStatus.Disconnected, () => {
-                connection.destroy();
-            });
         } catch (error) {
             console.error(error);
             await interaction.reply('Error playing the audio.');
