@@ -10,6 +10,6 @@ COPY ./requirements.txt /usr/src/bot
 COPY ext/ /usr/src/bot/ext/
 WORKDIR /usr/src/bot
 
-RUN pip3 install -r /usr/src/bot/requirements.txt
+RUN pipx install -r /usr/src/bot/requirements.txt
 
 CMD ["python3", "-u", "/usr/src/bot/laozibot.py"]
