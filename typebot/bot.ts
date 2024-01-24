@@ -1,12 +1,12 @@
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, VoiceChannel } from 'discord.js';
+import { getVoiceConnection, joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } from '@discordjs/voice';
 import dotenv from 'dotenv';
 
 var ytdl = require('ytdl-core');
 const fs = require('fs');
 
 dotenv.config();
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
-const token = process.env.DISCORD_TOKEN
+const token = process.env.DISCORD_TOKEN;
 
 const client = new Client({ intents: [
 		GatewayIntentBits.Guilds,
@@ -45,7 +45,7 @@ client.on('interactionCreate', async interaction => {
         try {
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
-                guildId: interaction.guildId,
+                guildId: interaction.guildId!,
                 adapterCreator: interaction.guild!.voiceAdapterCreator,
             });
             const stream = ytdl(youtubeLink, { filter: 'audioonly' });
@@ -68,8 +68,9 @@ client.on('interactionCreate', async interaction => {
         }
     }
     if (interaction.commandName === 'stop'){
-        const voice = require('@discordjs/voice');
-        await voice.getVoiceConnection(interaction.guildId).disconnect();
+        let connection = getVoiceConnection(interaction.guildId!);
+        connection?.disconnect();
+        await interaction.reply('Bye');
     }
 });
 

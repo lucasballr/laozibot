@@ -5,3 +5,5 @@ history.txt
 approved_users.txt
 *.bak
 .env
+node_modules
+package*
