@@ -52,7 +52,7 @@ client.on('interactionCreate', async interaction => {
 
             const audioPlayer = createAudioPlayer();
             const resource = createAudioResource(await ytdl(youtubeLink!));
-            resource.volume!.setVolume(1);
+            resource.volume?.setVolume(1);
             await interaction.reply(`Now playing: ${youtubeLink}`);
             connection.subscribe(audioPlayer);
             // const player = createAudioPlayer();
