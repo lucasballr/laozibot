@@ -31,7 +31,8 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (interaction.commandName === 'play') {
-        console.log(interaction);
+        const link = interaction.options.getString('link');
+        await interaction.reply(`You want to play ${link}`);
     }
 });
 
