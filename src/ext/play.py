@@ -11,14 +11,14 @@ class Play(commands.Cog):
         if ctx.author == self.bot.user:
             return
         if ctx.voice_client.is_playing():
-            await ctx.voice_client.pause()
+            ctx.voice_client.pause()
 
     @commands.command(name="resume", help="Resume playing from YouTube")
     async def resume(self, ctx):
         if ctx.author == self.bot.user:
             return
         if ctx.voice_client.is_playing():
-            await ctx.voice_client.resume()
+            ctx.voice_client.resume()
 
     @commands.command(name="stop", help="Stop playing from YouTube")
     async def stop(self, ctx):
