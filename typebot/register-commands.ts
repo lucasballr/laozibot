@@ -14,6 +14,12 @@ const commands = [
   {
     name: 'play',
     description: 'Plays music from YouTube',
+    options: [{
+      name: 'link',
+      type: 'STRING',
+      description: 'The YouTube link',
+      required: true,
+    }],
   },
 ];
 
